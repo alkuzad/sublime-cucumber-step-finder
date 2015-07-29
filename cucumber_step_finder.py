@@ -23,7 +23,11 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
   def find_all_steps(self):
     features_path = self.settings_get('cucumber_features_path')
     step_pattern = self.settings_get('cucumber_step_pattern')
-    pattern = re.compile(r'((.*)(\/\^.*))\$\/')
+    spinach = self.settings_get('spinach_syntax')
+    if spinach: 
+       pattern = re.compile(r'((\s*step\s*)([\'\"].*))[\'\"]')
+    else:
+       pattern = re.compile(r'((.*)(\/\^.*))\$\/')
     self.steps = []
     folders = self.window.folders()
     for folder in folders:
@@ -102,6 +106,9 @@ class MatchStepCommand(CucumberBaseCommand):
 
   def cut_words(self, text):
      words = self.settings_get('cucumber_code_keywords')
+     spinach = self.settings_get('spinach_syntax')
+     if spinach:
+       words.append('step')
      upcased = [up.capitalize() for up in words]
      expression = "^{0}".format('|^'.join(upcased))
 
@@ -109,7 +116,10 @@ class MatchStepCommand(CucumberBaseCommand):
      short_text = re.sub(pattern, '', text).strip()
      self.find_all_steps()
 
-     step_filter = re.compile(r'.*\/\^(.*)\$\/') # map all steps
+     if spinach:
+       step_filter = re.compile(r'.*\'(.*)\'')
+     else:
+       step_filter = re.compile(r'.*\/\^(.*)\$\/') # map all steps
      steps_regex = [re.match(step_filter, x[0]).group(1) for x in self.steps]
 
      for step in self.steps:
